@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package vertx.event.v1alpha;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
+import "google/rpc/status.proto";
+
+option java_multiple_files = true;
+option java_package = "io.vertx.grpc.event.v1alpha";
+option java_outer_classname = "EventBusBridgeProto";
+
+service EventBusBridge {
+  // Publish a message to an address
+  rpc Publish(EventRequest) returns (google.protobuf.Empty) {}
+
+  // Send a message to an address (point-to-point)
+  rpc Send(EventRequest) returns (EventMessage) {}
+
+  // Request-reply pattern
+  rpc Request(EventRequest) returns (EventMessage) {}
+
+  // Subscribe to messages from an address
+  rpc Subscribe(EventRequest) returns (stream EventMessage) {}
+
+  // Unsubscribe from an address
+  rpc Unsubscribe(EventRequest) returns (google.protobuf.Empty) {}
+
+  // Health check
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+// Core message used for publishing/sending
+message EventRequest {
+  // The address the message was sent to
+  string address = 1;
+
+  // Consumer for subscription management
+  string consumer = 2;
+
+  // Optional reply address
+  string reply_address = 3;
+
+  // Message headers
+  map<string, string> headers = 4;
+
+  // Message payload as structured data
+  google.protobuf.Struct body = 5;
+
+  // Timeout in milliseconds
+  int64 timeout = 6;
+}
+
+// Message received from the event bus
+message EventMessage {
+  // The address the message was sent to
+  string address = 1;
+
+  // Consumer for subscription management
+  string consumer = 2;
+
+  // Optional reply address
+  string reply_address = 3;
+
+  // Message headers
+  map<string, string> headers = 4;
+
+  // Message payload
+  google.protobuf.Struct body = 5;
+
+  // Optional status for error responses
+  google.rpc.Status status = 6;
+}
