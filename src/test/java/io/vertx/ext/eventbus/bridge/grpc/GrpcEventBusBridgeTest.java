@@ -2,7 +2,6 @@ package io.vertx.ext.eventbus.bridge.grpc;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.Struct;
-import com.google.protobuf.Value;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;

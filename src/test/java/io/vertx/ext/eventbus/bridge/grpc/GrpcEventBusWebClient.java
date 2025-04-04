@@ -2,9 +2,10 @@ package io.vertx.ext.eventbus.bridge.grpc;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.Message;
-import com.google.protobuf.Struct;
-import com.google.protobuf.Value;
-import io.vertx.core.*;
+import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
 import io.vertx.core.json.JsonObject;

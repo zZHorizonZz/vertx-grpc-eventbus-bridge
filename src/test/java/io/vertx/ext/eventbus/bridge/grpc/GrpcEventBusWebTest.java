@@ -1,6 +1,9 @@
 package io.vertx.ext.eventbus.bridge.grpc;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -13,15 +16,32 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static io.vertx.grpc.common.GrpcMediaType.GRPC_WEB_TEXT;
+
 @RunWith(VertxUnitRunner.class)
 public class GrpcEventBusWebTest extends GrpcEventBusBridgeTestBase {
 
     private static final String HOST = "localhost";
+    private static final String TEST_SERVICE = "/test";
+    private static final int PREFIX_SIZE = 5;
+    private static final String STATUS_OK = "grpc-status:0\r\n";
+
+    protected CharSequence responseContentType() {
+        return GRPC_WEB_TEXT;
+    }
 
     private Vertx vertx;
     private GrpcEventBusWebClient client;
+    private HttpClient httpClient;
     private String serverDeploymentId;
     private int port;
+
+    protected io.vertx.core.MultiMap requestHeaders() {
+        return HttpHeaders.headers()
+                .add(CONTENT_TYPE, GRPC_WEB_TEXT)
+                .add(HttpHeaders.createOptimized("X-Grpc-Web"), HttpHeaders.createOptimized("1"));
+    }
 
     private int findAvailablePort() {
         try {
@@ -44,6 +64,12 @@ public class GrpcEventBusWebTest extends GrpcEventBusBridgeTestBase {
         port = findAvailablePort();
         System.out.println("[TEST] Using port: " + port);
 
+        // Create HTTP client
+        HttpClientOptions options = new HttpClientOptions()
+                .setDefaultHost(HOST)
+                .setDefaultPort(port);
+        httpClient = vertx.createHttpClient(options);
+
         GrpcEventBusServer.deploy(vertx, port)
                 .onSuccess(deploymentId -> {
                     serverDeploymentId = deploymentId;
@@ -53,18 +79,12 @@ public class GrpcEventBusWebTest extends GrpcEventBusBridgeTestBase {
                     client = new GrpcEventBusWebClient(vertx, HOST, port);
 
                     // Ping the server to make sure it's ready
-                    client.ping()
-                            .onSuccess(v -> {
-                                System.out.println("[TEST] Server is ready");
-                                async.complete();
-                            })
-                            .onFailure(err -> {
-                                context.fail("Failed to ping server: " + err.getMessage());
-                            });
+                    client.ping().onSuccess(v -> {
+                        System.out.println("[TEST] Server is ready");
+                        async.complete();
+                    }).onFailure(err -> context.fail("Failed to ping server: " + err.getMessage()));
                 })
-                .onFailure(err -> {
-                    context.fail("Failed to deploy server: " + err.getMessage());
-                });
+                .onFailure(err -> context.fail("Failed to deploy server: " + err.getMessage()));
     }
 
     @After
