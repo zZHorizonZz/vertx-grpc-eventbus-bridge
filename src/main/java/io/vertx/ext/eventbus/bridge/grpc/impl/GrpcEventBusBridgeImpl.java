@@ -13,6 +13,7 @@ import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.eventbus.bridge.grpc.BridgeEvent;
 import io.vertx.ext.eventbus.bridge.grpc.GrpcEventBusBridge;
 import io.vertx.grpc.server.GrpcServer;
+import io.vertx.grpc.server.GrpcServerOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,7 +63,7 @@ public class GrpcEventBusBridgeImpl implements GrpcEventBusBridge {
                     .setPort(port)
                     .setHost(host);
 
-            GrpcServer grpcServer = GrpcServer.server(vertx);
+            GrpcServer grpcServer = GrpcServer.server(vertx, new GrpcServerOptions().setGrpcWebEnabled(true));
 
             service.bind(grpcServer);
 

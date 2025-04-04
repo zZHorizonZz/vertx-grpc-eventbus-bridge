@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(VertxUnitRunner.class)
-public class GrpcEventBusBridgeTest {
+public class GrpcEventBusBridgeTest extends GrpcEventBusBridgeTestBase {
 
     private Vertx vertx;
     private GrpcEventBusBridge bridge;
@@ -82,67 +82,6 @@ public class GrpcEventBusBridgeTest {
         } else {
             vertx.close().onComplete(context.asyncAssertSuccess(h -> async.complete()));
         }
-    }
-
-    /**
-     * Convert a JsonObject to a Protobuf Struct
-     * TODO: In the future we should use a proper conversion implemented directly to Vert.x?
-     */
-    private Struct jsonToStruct(JsonObject json) {
-        if (json == null) {
-            return Struct.getDefaultInstance();
-        }
-
-        Struct.Builder structBuilder = Struct.newBuilder();
-        for (String fieldName : json.fieldNames()) {
-            Object value = json.getValue(fieldName);
-            if (value == null) {
-                structBuilder.putFields(fieldName, Value.newBuilder().setNullValue(com.google.protobuf.NullValue.NULL_VALUE).build());
-            } else if (value instanceof String) {
-                structBuilder.putFields(fieldName, Value.newBuilder().setStringValue((String) value).build());
-            } else if (value instanceof Number) {
-                structBuilder.putFields(fieldName, Value.newBuilder().setNumberValue(((Number) value).doubleValue()).build());
-            } else if (value instanceof Boolean) {
-                structBuilder.putFields(fieldName, Value.newBuilder().setBoolValue((Boolean) value).build());
-            } else if (value instanceof JsonObject) {
-                structBuilder.putFields(fieldName, Value.newBuilder().setStructValue(jsonToStruct((JsonObject) value)).build());
-            }
-        }
-        return structBuilder.build();
-    }
-
-    /**
-     * Convert a Protobuf Struct to a JsonObject
-     * TODO: In the future we should use a proper conversion implemented directly to Vert.x?
-     */
-    private JsonObject structToJson(Struct struct) {
-        if (struct == null) {
-            return new JsonObject();
-        }
-
-        JsonObject json = new JsonObject();
-        struct.getFieldsMap().forEach((key, value) -> {
-            switch (value.getKindCase()) {
-                case NULL_VALUE:
-                    json.putNull(key);
-                    break;
-                case NUMBER_VALUE:
-                    json.put(key, value.getNumberValue());
-                    break;
-                case STRING_VALUE:
-                    json.put(key, value.getStringValue());
-                    break;
-                case BOOL_VALUE:
-                    json.put(key, value.getBoolValue());
-                    break;
-                case STRUCT_VALUE:
-                    json.put(key, structToJson(value.getStructValue()));
-                    break;
-                default:
-                    break;
-            }
-        });
-        return json;
     }
 
     @Test
