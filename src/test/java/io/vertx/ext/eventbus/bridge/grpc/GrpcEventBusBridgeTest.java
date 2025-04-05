@@ -24,62 +24,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-@RunWith(VertxUnitRunner.class)
 public class GrpcEventBusBridgeTest extends GrpcEventBusBridgeTestBase {
 
-    private Vertx vertx;
-    private GrpcEventBusBridge bridge;
     private GrpcClient client;
     private EventBusBridgeGrpcClient grpcClient;
-    private volatile Handler<BridgeEvent> eventHandler = event -> event.complete(true);
 
-    @Before
+    @Override
     public void before(TestContext context) {
-        vertx = Vertx.vertx();
+        super.before(context);
 
-        final Async async = context.async();
+        client = GrpcClient.client(vertx);
 
-        vertx.eventBus().consumer("hello", (Message<JsonObject> msg) -> msg.reply(new JsonObject().put("value", "Hello " + msg.body().getString("value"))));
-        vertx.eventBus().consumer("echo", (Message<JsonObject> msg) -> msg.reply(msg.body()));
-        vertx.setPeriodic(1000, __ -> vertx.eventBus().send("ping", new JsonObject().put("value", "hi")));
-
-        bridge = GrpcEventBusBridge.create(
-                vertx,
-                new BridgeOptions()
-                        .addInboundPermitted(new PermittedOptions().setAddress("hello"))
-                        .addInboundPermitted(new PermittedOptions().setAddress("echo"))
-                        .addInboundPermitted(new PermittedOptions().setAddress("test"))
-                        .addOutboundPermitted(new PermittedOptions().setAddress("echo"))
-                        .addOutboundPermitted(new PermittedOptions().setAddress("test"))
-                        .addOutboundPermitted(new PermittedOptions().setAddress("ping")),
-                7000,
-                event -> eventHandler.handle(event));
-
-        bridge.listen().onComplete(res -> {
-            context.assertTrue(res.succeeded());
-
-            client = GrpcClient.client(vertx);
-
-            SocketAddress socketAddress = SocketAddress.inetSocketAddress(7000, "localhost");
-            grpcClient = EventBusBridgeGrpcClient.create(client, socketAddress);
-
-            async.complete();
-        });
+        SocketAddress socketAddress = SocketAddress.inetSocketAddress(7000, "localhost");
+        grpcClient = EventBusBridgeGrpcClient.create(client, socketAddress);
     }
 
     @After
     public void after(TestContext context) {
         Async async = context.async();
-        if (bridge != null) {
-            bridge.close().onComplete(v -> {
-                if (client != null) {
-                    client.close().onComplete(c -> vertx.close().onComplete(context.asyncAssertSuccess(h -> async.complete())));
-                } else {
-                    vertx.close().onComplete(context.asyncAssertSuccess(h -> async.complete()));
-                }
-            });
-        } else {
-            vertx.close().onComplete(context.asyncAssertSuccess(h -> async.complete()));
+
+        super.after(context);
+
+        if (client != null) {
+            client.close().onComplete(c -> vertx.close().onComplete(context.asyncAssertSuccess(h -> async.complete())));
         }
     }
 
