@@ -150,7 +150,7 @@ public abstract class EventBusBridgeHandlerBase {
         }
     }
 
-    protected JsonObject createEvent(String type, EventRequest request) {
+    protected static JsonObject createEvent(String type, EventRequest request) {
         JsonObject event = new JsonObject().put("type", type);
 
         if (request == null) {
@@ -178,7 +178,7 @@ public abstract class EventBusBridgeHandlerBase {
         return event;
     }
 
-    protected JsonObject protoToJson(Message message) {
+    protected static JsonObject protoToJson(Message message) {
         JsonObject json = new JsonObject();
         try {
             String jsonString = JsonFormat.printer().print(message);
@@ -190,7 +190,7 @@ public abstract class EventBusBridgeHandlerBase {
     }
 
     @SuppressWarnings("unchecked")
-    protected <T extends Message> T jsonToProto(JsonObject json, Message.Builder builder) {
+    protected static <T extends Message> T jsonToProto(JsonObject json, Message.Builder builder) {
         try {
             JsonFormat.parser().merge(json.encode(), builder);
         } catch (Exception e) {
@@ -202,7 +202,7 @@ public abstract class EventBusBridgeHandlerBase {
     /**
      * Convert request headers to DeliveryOptions
      */
-    public DeliveryOptions createDeliveryOptions(Map<String, String> headers) {
+    public static DeliveryOptions createDeliveryOptions(Map<String, String> headers) {
         DeliveryOptions options = new DeliveryOptions();
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
