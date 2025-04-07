@@ -14,6 +14,9 @@ import io.vertx.grpc.server.Service;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/**
+ * The service implements the gRPC service defined in the protobuf file and exposes the EventBus operations through gRPC methods.
+ */
 public class EventBusBridgeService implements Service {
 
     private static final ServiceName SERVICE_NAME = ServiceName.create("vertx.event.v1alpha.EventBusBridge");
@@ -43,6 +46,7 @@ public class EventBusBridgeService implements Service {
 
     @Override
     public void bind(GrpcServer server) {
+        // Register handlers for all supported operations
         server.callHandler(EventBusBridgePublishHandler.SERVICE_METHOD, new EventBusBridgePublishHandler(eventBus, options, bridgeEventHandler, compiledREs));
         server.callHandler(EventBusBridgeSendHandler.SERVICE_METHOD, new EventBusBridgeSendHandler(eventBus, options, bridgeEventHandler, compiledREs));
         server.callHandler(EventBusBridgeRequestHandler.SERVICE_METHOD, new EventBusBridgeRequestHandler(eventBus, options, bridgeEventHandler, compiledREs));

@@ -19,6 +19,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/**
+ * Implementation of the GrpcEventBusBridge interface.
+ * <p>
+ * This class sets up a gRPC server that bridges the Vert.x EventBus to external clients. It allows external applications to communicate with the Vert.x EventBus through gRPC,
+ * enabling cross-platform and cross-language communication.
+ * <p>
+ * The bridge supports operations like publishing messages, sending requests, subscribing to addresses, and handling responses from the EventBus.
+ */
 public class GrpcEventBusBridgeImpl implements GrpcEventBusBridge {
 
     private static final Logger log = LoggerFactory.getLogger(GrpcEventBusBridgeImpl.class);
@@ -58,15 +66,21 @@ public class GrpcEventBusBridgeImpl implements GrpcEventBusBridge {
         Promise<GrpcEventBusBridge> promise = Promise.promise();
 
         try {
+            // Create the EventBus bridge service that will handle gRPC requests
             EventBusBridgeService service = new EventBusBridgeService(eb, options, bridgeEventHandler, compiledREs);
+
+            // Configure the HTTP server options
             HttpServerOptions serverOptions = new HttpServerOptions()
                     .setPort(port)
                     .setHost(host);
 
+            // Create a gRPC server with gRPC-Web support enabled
             GrpcServer grpcServer = GrpcServer.server(vertx, new GrpcServerOptions().setGrpcWebEnabled(true));
 
+            // Bind the service to the gRPC server
             service.bind(grpcServer);
 
+            // Create and start the HTTP server
             server = vertx.createHttpServer(serverOptions);
             server.requestHandler(grpcServer);
             server.listen().onComplete(res -> {
@@ -90,8 +104,10 @@ public class GrpcEventBusBridgeImpl implements GrpcEventBusBridge {
     public Future<Void> close() {
         Promise<Void> promise = Promise.promise();
         if (server != null) {
+            // Close the HTTP server if it exists
             server.close().onComplete(res -> {
                 if (res.succeeded()) {
+                    log.info("gRPC EventBus Bridge server closed successfully");
                     promise.complete();
                 } else {
                     log.error("Error shutting down gRPC server", res.cause());
@@ -99,6 +115,7 @@ public class GrpcEventBusBridgeImpl implements GrpcEventBusBridge {
                 }
             });
         } else {
+            // No server to close, complete immediately
             promise.complete();
         }
         return promise.future();

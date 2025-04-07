@@ -9,81 +9,81 @@ import io.vertx.ext.eventbus.bridge.grpc.BridgeEvent;
 
 class BridgeEventImpl implements BridgeEvent {
 
-  private final BridgeEventType type;
-  private final JsonObject rawMessage;
-  private final Promise<Boolean> promise;
+    private final BridgeEventType type;
+    private final JsonObject rawMessage;
+    private final Promise<Boolean> promise;
 
-  public BridgeEventImpl(BridgeEventType type, JsonObject rawMessage) {
-    this.type = type;
-    this.rawMessage = rawMessage;
-    this.promise = Promise.promise();
-  }
-
-  @Override
-  public Future<Boolean> future() {
-    return promise.future();
-  }
-
-  @Override
-  public BridgeEventType type() {
-    return type;
-  }
-
-  @Override
-  public JsonObject getRawMessage() {
-    return rawMessage;
-  }
-
-  @Override
-  public BridgeEvent setRawMessage(JsonObject message) {
-    if (message != rawMessage) {
-      rawMessage.clear().mergeIn(message);
+    public BridgeEventImpl(BridgeEventType type, JsonObject rawMessage) {
+        this.type = type;
+        this.rawMessage = rawMessage;
+        this.promise = Promise.promise();
     }
-    return this;
-  }
 
-  @Override
-  public void handle(AsyncResult<Boolean> asyncResult) {
-    promise.handle(asyncResult);
-  }
+    @Override
+    public Future<Boolean> future() {
+        return promise.future();
+    }
 
-  @Override
-  public void complete(Boolean result) {
-    promise.complete(result);
-  }
+    @Override
+    public BridgeEventType type() {
+        return type;
+    }
 
-  @Override
-  public void complete() {
-    promise.complete();
-  }
+    @Override
+    public JsonObject getRawMessage() {
+        return rawMessage;
+    }
 
-  @Override
-  public void fail(Throwable throwable) {
-    promise.fail(throwable);
-  }
+    @Override
+    public BridgeEvent setRawMessage(JsonObject message) {
+        if (message != rawMessage) {
+            rawMessage.clear().mergeIn(message);
+        }
+        return this;
+    }
 
-  @Override
-  public void fail(String failureMessage) {
-    promise.fail(failureMessage);
-  }
+    @Override
+    public void handle(AsyncResult<Boolean> asyncResult) {
+        promise.handle(asyncResult);
+    }
 
-  @Override
-  public boolean tryComplete(Boolean result) {
-    return promise.tryComplete(result);
-  }
+    @Override
+    public void complete(Boolean result) {
+        promise.complete(result);
+    }
 
-  @Override
-  public boolean tryComplete() {
-    return promise.tryComplete();
-  }
+    @Override
+    public void complete() {
+        promise.complete();
+    }
 
-  @Override
-  public boolean tryFail(Throwable cause) {
-    return promise.tryFail(cause);
-  }
+    @Override
+    public void fail(Throwable throwable) {
+        promise.fail(throwable);
+    }
 
-  @Override
-  public boolean tryFail(String failureMessage) {
-    return promise.tryFail(failureMessage);
-  }
+    @Override
+    public void fail(String failureMessage) {
+        promise.fail(failureMessage);
+    }
+
+    @Override
+    public boolean tryComplete(Boolean result) {
+        return promise.tryComplete(result);
+    }
+
+    @Override
+    public boolean tryComplete() {
+        return promise.tryComplete();
+    }
+
+    @Override
+    public boolean tryFail(Throwable cause) {
+        return promise.tryFail(cause);
+    }
+
+    @Override
+    public boolean tryFail(String failureMessage) {
+        return promise.tryFail(failureMessage);
+    }
 }
