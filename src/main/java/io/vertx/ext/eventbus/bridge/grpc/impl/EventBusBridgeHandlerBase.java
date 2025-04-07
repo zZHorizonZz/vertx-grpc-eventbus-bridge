@@ -15,6 +15,7 @@ import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.grpc.BridgeEvent;
+import io.vertx.grpc.common.GrpcStatus;
 import io.vertx.grpc.event.v1alpha.EventMessage;
 import io.vertx.grpc.event.v1alpha.EventRequest;
 import io.vertx.grpc.server.GrpcServerRequest;
@@ -167,6 +168,20 @@ public abstract class EventBusBridgeHandlerBase {
         // Check if the address matches the pattern
         Matcher m = pattern.matcher(address);
         return m.matches();
+    }
+
+    protected <Req, Resp> void replyStatus(GrpcServerRequest<Req, Resp> request, GrpcStatus status) {
+        this.replyStatus(request, status, null);
+    }
+
+    protected <Req, Resp> void replyStatus(GrpcServerRequest<Req, Resp> request, GrpcStatus status, String message) {
+        request.response().status(status);
+
+        if (message != null) {
+            request.response().statusMessage(message);
+        }
+
+        request.response().end();
     }
 
     /**

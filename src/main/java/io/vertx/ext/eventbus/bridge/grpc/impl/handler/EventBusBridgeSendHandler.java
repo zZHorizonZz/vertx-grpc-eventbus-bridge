@@ -37,7 +37,7 @@ public class EventBusBridgeSendHandler extends EventBusBridgeHandlerBase impleme
         request.handler(eventRequest -> {
             String address = eventRequest.getAddress();
             if (address.isEmpty()) {
-                request.response().status(GrpcStatus.INVALID_ARGUMENT).end();
+                replyStatus(request, GrpcStatus.INVALID_ARGUMENT, "Invalid address");
                 return;
             }
 
@@ -45,7 +45,7 @@ public class EventBusBridgeSendHandler extends EventBusBridgeHandlerBase impleme
             JsonObject eventJson = createEvent("send", eventRequest);
 
             if (!checkMatches(true, address)) {
-                request.response().status(GrpcStatus.PERMISSION_DENIED).end();
+                replyStatus(request, GrpcStatus.PERMISSION_DENIED);
                 return;
             }
 
@@ -71,7 +71,7 @@ public class EventBusBridgeSendHandler extends EventBusBridgeHandlerBase impleme
                             request.response().end(EventMessage.getDefaultInstance());
                         }
                     },
-                    () -> request.response().status(GrpcStatus.PERMISSION_DENIED).end());
+                    () -> replyStatus(request, GrpcStatus.PERMISSION_DENIED));
         });
     }
 }

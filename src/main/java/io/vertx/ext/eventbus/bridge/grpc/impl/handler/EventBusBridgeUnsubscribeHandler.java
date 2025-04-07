@@ -38,19 +38,19 @@ public class EventBusBridgeUnsubscribeHandler extends EventBusBridgeHandlerBase 
             String consumerId = eventRequest.getConsumer();
 
             if (address.isEmpty()) {
-                request.response().status(GrpcStatus.INVALID_ARGUMENT).end();
+                replyStatus(request, GrpcStatus.INVALID_ARGUMENT, "Invalid address");
                 return;
             }
 
             if (consumerId.isEmpty()) {
-                request.response().status(GrpcStatus.INVALID_ARGUMENT).end();
+                replyStatus(request, GrpcStatus.INVALID_ARGUMENT, "Invalid consumer id");
                 return;
             }
 
             JsonObject eventJson = createEvent("unregister", eventRequest);
 
             if (!checkMatches(false, address)) {
-                request.response().status(GrpcStatus.PERMISSION_DENIED).end();
+                replyStatus(request, GrpcStatus.PERMISSION_DENIED);
                 return;
             }
 
@@ -62,7 +62,7 @@ public class EventBusBridgeUnsubscribeHandler extends EventBusBridgeHandlerBase 
                             request.response().status(GrpcStatus.NOT_FOUND).end();
                         }
                     },
-                    () -> request.response().status(GrpcStatus.PERMISSION_DENIED).end());
+                    () -> replyStatus(request, GrpcStatus.PERMISSION_DENIED));
         });
     }
 }

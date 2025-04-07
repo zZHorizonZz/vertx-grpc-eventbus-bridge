@@ -37,7 +37,7 @@ public class EventBusBridgePublishHandler extends EventBusBridgeHandlerBase impl
         request.handler(eventRequest -> {
             String address = eventRequest.getAddress();
             if (address.isEmpty()) {
-                request.response().status(GrpcStatus.INVALID_ARGUMENT).end();
+                replyStatus(request, GrpcStatus.INVALID_ARGUMENT, "Invalid address");
                 return;
             }
 
@@ -45,22 +45,17 @@ public class EventBusBridgePublishHandler extends EventBusBridgeHandlerBase impl
             JsonObject eventJson = createEvent("publish", eventRequest);
 
             if (!checkMatches(true, address)) {
-                request.response().status(GrpcStatus.PERMISSION_DENIED).end();
+                replyStatus(request, GrpcStatus.PERMISSION_DENIED);
                 return;
             }
 
             checkCallHook(BridgeEventType.PUBLISH, eventJson,
                     () -> {
-                        // Create delivery options from headers
                         DeliveryOptions deliveryOptions = createDeliveryOptions(eventRequest.getHeadersMap());
-
-                        // Publish the message
                         bus.publish(address, body, deliveryOptions);
-
-                        // Send success response
                         request.response().end(Empty.getDefaultInstance());
                     },
-                    () -> request.response().status(GrpcStatus.PERMISSION_DENIED).end());
+                    () -> replyStatus(request, GrpcStatus.PERMISSION_DENIED));
         });
     }
 }

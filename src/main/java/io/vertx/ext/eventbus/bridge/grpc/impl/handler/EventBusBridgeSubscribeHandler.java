@@ -43,14 +43,14 @@ public class EventBusBridgeSubscribeHandler extends EventBusBridgeHandlerBase im
         request.handler(eventRequest -> {
             String address = eventRequest.getAddress();
             if (address.isEmpty()) {
-                request.response().status(GrpcStatus.INVALID_ARGUMENT).end();
+                replyStatus(request, GrpcStatus.INVALID_ARGUMENT, "Invalid address");
                 return;
             }
 
             JsonObject event = createEvent("register", eventRequest);
 
             if (!checkMatches(false, address)) {
-                request.response().status(GrpcStatus.PERMISSION_DENIED).end();
+                replyStatus(request, GrpcStatus.PERMISSION_DENIED);
                 return;
             }
 
@@ -68,7 +68,7 @@ public class EventBusBridgeSubscribeHandler extends EventBusBridgeHandlerBase im
 
                         request.endHandler(v -> unregisterConsumer(address, consumerId));
                     },
-                    () -> request.response().status(GrpcStatus.PERMISSION_DENIED).end());
+                    () -> replyStatus(request, GrpcStatus.PERMISSION_DENIED));
         });
     }
 
