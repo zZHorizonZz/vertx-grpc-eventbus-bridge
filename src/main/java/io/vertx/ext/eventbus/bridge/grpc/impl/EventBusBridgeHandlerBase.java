@@ -15,7 +15,9 @@ import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.eventbus.bridge.grpc.BridgeEvent;
+import io.vertx.grpc.event.v1alpha.EventMessage;
 import io.vertx.grpc.event.v1alpha.EventRequest;
+import io.vertx.grpc.server.GrpcServerRequest;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +36,7 @@ public abstract class EventBusBridgeHandlerBase {
 
     protected static final Map<String, Map<String, MessageConsumer<?>>> consumers = new ConcurrentHashMap<>();
     protected static final Map<String, io.vertx.core.eventbus.Message<?>> replies = new ConcurrentHashMap<>();
+    protected static final Map<String, GrpcServerRequest<EventRequest, EventMessage>> requests = new ConcurrentHashMap<>();
 
     public EventBusBridgeHandlerBase(EventBus bus, BridgeOptions options, Handler<BridgeEvent> bridgeEventHandler, Map<String, Pattern> compiledREs) {
         this.bus = bus;
@@ -115,6 +118,12 @@ public abstract class EventBusBridgeHandlerBase {
         Map<String, MessageConsumer<?>> addressConsumers = consumers.get(address);
         if (addressConsumers != null) {
             MessageConsumer<?> consumer = addressConsumers.remove(consumerId);
+            GrpcServerRequest<EventRequest, EventMessage> request = requests.remove(consumerId);
+
+            if(request != null) {
+                request.response().end();
+            }
+
             if (consumer != null) {
                 consumer.unregister();
                 if (addressConsumers.isEmpty()) {

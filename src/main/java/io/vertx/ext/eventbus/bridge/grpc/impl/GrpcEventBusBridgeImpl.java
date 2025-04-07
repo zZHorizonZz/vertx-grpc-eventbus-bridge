@@ -58,7 +58,7 @@ public class GrpcEventBusBridgeImpl implements GrpcEventBusBridge {
         Promise<GrpcEventBusBridge> promise = Promise.promise();
 
         try {
-            GrpcEventBusBridgeService service = new GrpcEventBusBridgeService(eb, options, bridgeEventHandler, compiledREs);
+            EventBusBridgeService service = new EventBusBridgeService(eb, options, bridgeEventHandler, compiledREs);
             HttpServerOptions serverOptions = new HttpServerOptions()
                     .setPort(port)
                     .setHost(host);

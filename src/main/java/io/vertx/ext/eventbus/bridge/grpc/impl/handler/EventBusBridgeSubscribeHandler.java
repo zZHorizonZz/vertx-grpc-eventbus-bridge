@@ -57,6 +57,11 @@ public class EventBusBridgeSubscribeHandler extends EventBusBridgeHandlerBase im
                     () -> {
                         String consumerId = UUID.randomUUID().toString();
 
+                        // Register the consumer
+                        requests.put(consumerId, request);
+
+                        request.pause();
+
                         MessageConsumer<Object> consumer = bus.consumer(address, message -> {
                             Map<String, String> responseHeaders = new HashMap<>();
                             for (Map.Entry<String, String> entry : message.headers()) {
@@ -85,16 +90,16 @@ public class EventBusBridgeSubscribeHandler extends EventBusBridgeHandlerBase im
                                 replies.put(message.replyAddress(), message);
                             }
 
+                            request.resume();
                             request.response().write(response);
+                            request.pause();
                         });
 
                         Map<String, MessageConsumer<?>> addressConsumers = consumers.computeIfAbsent(address, k -> new ConcurrentHashMap<>());
                         addressConsumers.put(consumerId, consumer);
 
                         // Handle end of stream
-                        request.endHandler(v -> {
-                            unregisterConsumer(address, consumerId);
-                        });
+                        request.endHandler(v -> unregisterConsumer(address, consumerId));
                     },
                     () -> request.response().status(GrpcStatus.PERMISSION_DENIED).end());
         });

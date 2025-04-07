@@ -5,7 +5,6 @@ import com.google.protobuf.Message;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
@@ -14,18 +13,12 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.grpc.common.GrpcMessage;
 import io.vertx.grpc.common.impl.GrpcMessageImpl;
 import io.vertx.grpc.event.v1alpha.EventMessage;
 import io.vertx.grpc.event.v1alpha.EventRequest;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.Base64;
 
 import static io.vertx.core.http.HttpHeaders.ACCEPT;

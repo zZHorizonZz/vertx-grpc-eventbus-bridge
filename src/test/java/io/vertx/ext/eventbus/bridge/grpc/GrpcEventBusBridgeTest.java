@@ -2,23 +2,16 @@ package io.vertx.ext.eventbus.bridge.grpc;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.Struct;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SocketAddress;
-import io.vertx.ext.bridge.BridgeOptions;
-import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.grpc.client.GrpcClient;
 import io.vertx.grpc.event.v1alpha.EventBusBridgeGrpcClient;
 import io.vertx.grpc.event.v1alpha.EventRequest;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
