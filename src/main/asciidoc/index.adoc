@@ -1,6 +1,6 @@
-= Vert.x TCP EventBus bridge
+= Vert.x gRPC EventBus Bridge
 
-Vert.x TCP EventBus bridge is a TCP bridge to Vert.x EventBus.
+Vert.x gRPC EventBus Bridge is a gRPC bridge to Vert.x EventBus.
 To use this project, add the following dependency to the _dependencies_ section of your build descriptor:
 
 Maven (in your `pom.xml`):
@@ -21,61 +21,291 @@ Gradle (in your `build.gradle` file):
 compile '${maven.groupId}:${maven.artifactId}:${maven.version}'
 ----
 
-The TCP EventBus bridge is built on top of TCP, meaning that any application that can create TCP sockets can interact with a remote Vert.x instance via its event bus.
+The gRPC EventBus Bridge is built on top of gRPC, meaning that any application that can create gRPC clients can interact with a remote Vert.x instance via its event bus.
+The main use case for the gRPC bridge is for applications that need a standardized, high-performance, and language-agnostic way to communicate with a Vert.x EventBus. gRPC provides a modern, open-source RPC framework that uses HTTP/2 for transport, Protocol Buffers as the interface description language.
+The bridge also supports gRPC-Web, allowing web clients to communicate with the gRPC server.
 
-The main use case for the TCP bridge _versus_ the SockJS bridge is for applications that are more resource-constrained and that need to be lightweight since the whole HTTP WebSockets is replaced with plain TCP sockets.
+== Protocol Description
 
-It remains of course useful even for applications that don't have tight resource constraints:
-the protocol is simple enough to efficiently provide an integration interface with non-JVM applications.
+The gRPC EventBus Bridge uses Protocol Buffers to define the service and message structures. The service definition includes the following operations:
 
-The protocol has been kept as simple as possible and communications use Frames both ways.
-The structure of a Frame looks like this:
+1. `Publish`: Publishes a message to an address (one-way communication)
+2. `Send`: Sends a message to an address (point-to-point)
+3. `Request`: Implements the request-reply pattern
+4. `Subscribe`: Subscribes to messages from an address (returns a stream of messages)
+5. `Unsubscribe`: Unsubscribes from an address
+6. `Ping`: Health check
 
+The message structures are defined as follows:
+
+=== EventRequest
+
+Used for sending messages to the EventBus:
+
+[source,proto]
 ----
-<Length: uInt32><{
-   type: String,
-   address: String,
-   (replyAddress: String)?,
-   headers: JsonObject,
-   body: JsonObject
-}: JsonObject>
-----
+message EventRequest {
+  // The address the message was sent to
+  string address = 1;
 
-The message consists of a JSON document that may or may not have been minified.
-The message must be prefixed by a _big endian_ 32 bits positive integer (4 bytes) that indicates the full length of the JSON document, in bytes.
+  // Consumer for subscription management
+  string consumer = 2;
 
-The message `type` can be the following for messages sent by the TCP client:
+  // Optional reply address
+  string reply_address = 3;
 
-1. `send` to send a message to an `address`,
-2. `publish` to publish a message to an `address`,
-3. `register` to subscribe to the messages sent or published to an `address`,
-4. `unregister` to unsubscribe to the messages sent or published to an `address`,
-5. `ping` to send a `ping` request to the bridge.
+  // Message headers
+  map<string, string> headers = 4;
 
-Note that the `replyAddress` field is optional and may only be used for a `send` message.
-A message with that field is expected to _eventually_ receive a message back from the server whose `address` field will be that of the original `replyAddress` value.
+  // Message payload as structured data
+  google.protobuf.Struct body = 5;
 
-The server posts messages back to the client, and they can be of the following `type`:
-
-1. `message` for messages sent or published to an `address`, or
-2. `err` to indicate an error (the `body` shall contain details), or
-3. `pong` to respond the `ping` request sent from client.
-
-An example Node.js client is available in the source of the project.
-This client uses the same API as the SockJS counterpart so it should make it easier to switch between the TCP and SockJS implementations.
-
-An example on how to get started with this bridge could be:
-
-[source,$lang]
-----
-{@link examples.TCPBridgeExamples#example1}
+  // Timeout in milliseconds
+  int64 timeout = 6;
+}
 ----
 
-== Listening to Unix domain sockets
+=== EventMessage
 
-When running on JDK 16+, or using a https://vertx.io/docs/vertx-core/java/#_native_transports[native transport], a server can listen to Unix domain sockets:
+Used for receiving messages from the EventBus:
 
-[source,$lang]
+[source,proto]
 ----
-{@link examples.TCPBridgeExamples#serverWithDomainSockets}
+message EventMessage {
+  // The address the message was sent to
+  string address = 1;
+
+  // Consumer for subscription management
+  string consumer = 2;
+
+  // Optional reply address
+  string reply_address = 3;
+
+  // Message headers
+  map<string, string> headers = 4;
+
+  // Message payload
+  google.protobuf.Struct body = 5;
+
+  // Optional status for error responses
+  google.rpc.Status status = 6;
+}
+----
+
+== Usage Examples
+
+=== Creating a gRPC EventBus Bridge Server
+
+Here's an example of how to create and start a gRPC EventBus Bridge server:
+
+[source,java]
+----
+Vertx vertx = Vertx.vertx();
+
+// Configure bridge options
+BridgeOptions options = new BridgeOptions()
+  .addInboundPermitted(new PermittedOptions().setAddress("hello"))
+  .addInboundPermitted(new PermittedOptions().setAddress("echo"))
+  .addOutboundPermitted(new PermittedOptions().setAddress("news"));
+
+// Create the bridge
+GrpcEventBusBridge bridge = GrpcEventBusBridge.create(
+  vertx,
+  options,
+  7000,  // Port
+  event -> {
+    // Optional event handler for bridge events
+    System.out.println("Bridge event: " + event.type());
+    event.complete(true);
+  }
+);
+
+// Start the bridge
+bridge.listen().onComplete(ar -> {
+  if (ar.succeeded()) {
+    System.out.println("gRPC EventBus Bridge started");
+  } else {
+    System.err.println("Failed to start gRPC EventBus Bridge: " + ar.cause());
+  }
+});
+----
+
+=== Creating a gRPC Client
+
+Here's how to create a gRPC client to connect to the bridge:
+
+[source,java]
+----
+// Create the gRPC client
+GrpcClient client = GrpcClient.client(vertx);
+SocketAddress socketAddress = SocketAddress.inetSocketAddress(7000, "localhost");
+EventBusBridgeGrpcClient grpcClient = EventBusBridgeGrpcClient.create(client, socketAddress);
+----
+
+=== Sending Messages
+
+To send a message to an address:
+
+[source,java]
+----
+// Create a message
+JsonObject message = new JsonObject().put("value", "Hello from gRPC client");
+
+// Convert to Protobuf Struct
+Struct messageBody = jsonToStruct(message);
+
+// Create the request
+EventRequest request = EventRequest.newBuilder()
+  .setAddress("hello")
+  .setBody(messageBody)
+  .build();
+
+// Send the message
+grpcClient.send(request).onComplete(ar -> {
+  if (ar.succeeded()) {
+    System.out.println("Message sent successfully");
+  } else {
+    System.err.println("Failed to send message: " + ar.cause());
+  }
+});
+----
+
+=== Request-Response Pattern
+
+To send a request and receive a response:
+
+[source,java]
+----
+// Create a message
+JsonObject message = new JsonObject().put("value", "Hello from gRPC client");
+
+// Convert to Protobuf Struct
+Struct messageBody = jsonToStruct(message);
+
+// Create the request with timeout
+EventRequest request = EventRequest.newBuilder()
+  .setAddress("hello")
+  .setBody(messageBody)
+  .setTimeout(5000)  // 5 seconds timeout
+  .build();
+
+// Send the request
+grpcClient.request(request).onComplete(ar -> {
+  if (ar.succeeded()) {
+    EventMessage response = ar.result();
+    // Convert Protobuf Struct to JsonObject
+    JsonObject responseBody = structToJson(response.getBody());
+    System.out.println("Received response: " + responseBody);
+  } else {
+    System.err.println("Request failed: " + ar.cause());
+  }
+});
+----
+
+=== Publishing Messages
+
+To publish a message to all subscribers:
+
+[source,java]
+----
+// Create a message
+JsonObject message = new JsonObject().put("value", "Broadcast message");
+
+// Convert to Protobuf Struct
+Struct messageBody = jsonToStruct(message);
+
+// Create the request
+EventRequest request = EventRequest.newBuilder()
+  .setAddress("news")
+  .setBody(messageBody)
+  .build();
+
+// Publish the message
+grpcClient.publish(request).onComplete(ar -> {
+  if (ar.succeeded()) {
+    System.out.println("Message published successfully");
+  } else {
+    System.err.println("Failed to publish message: " + ar.cause());
+  }
+});
+----
+
+=== Subscribing to Messages
+
+To subscribe to messages from an address:
+
+[source,java]
+----
+// Create the subscription request
+EventRequest request = EventRequest.newBuilder()
+  .setAddress("news")
+  .build();
+
+// Subscribe to the address
+grpcClient.subscribe(request).onComplete(ar -> {
+  if (ar.succeeded()) {
+    // Get the stream
+    ReadStream<EventMessage> stream = ar.result();
+
+    // Set a handler for incoming messages
+    stream.handler(message -> {
+      // Store the consumer ID for later unsubscribing
+      String consumerId = message.getConsumer();
+
+      // Convert Protobuf Struct to JsonObject
+      JsonObject messageBody = structToJson(message.getBody());
+      System.out.println("Received message: " + messageBody);
+    });
+
+    // Handle end of stream
+    stream.endHandler(v -> {
+      System.out.println("Stream ended");
+    });
+
+    // Handle errors
+    stream.exceptionHandler(err -> {
+      System.err.println("Stream error: " + err.getMessage());
+    });
+  } else {
+    System.err.println("Failed to subscribe: " + ar.cause());
+  }
+});
+----
+
+=== Unsubscribing from Messages
+
+To unsubscribe from an address:
+
+[source,java]
+----
+// Create the unsubscribe request with the consumer ID received during subscription
+EventRequest request = EventRequest.newBuilder()
+  .setAddress("news")
+  .setConsumer(consumerId)  // The consumer ID received in the subscription
+  .build();
+
+// Unsubscribe
+grpcClient.unsubscribe(request).onComplete(ar -> {
+  if (ar.succeeded()) {
+    System.out.println("Unsubscribed successfully");
+  } else {
+    System.err.println("Failed to unsubscribe: " + ar.cause());
+  }
+});
+----
+
+=== Health Check
+
+To perform a health check:
+
+[source,java]
+----
+// Send a ping request
+grpcClient.ping(Empty.getDefaultInstance()).onComplete(ar -> {
+  if (ar.succeeded()) {
+    System.out.println("Bridge is healthy");
+  } else {
+    System.err.println("Bridge health check failed: " + ar.cause());
+  }
+});
 ----
