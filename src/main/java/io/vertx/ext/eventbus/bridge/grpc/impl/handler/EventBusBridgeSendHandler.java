@@ -74,17 +74,4 @@ public class EventBusBridgeSendHandler extends EventBusBridgeHandlerBase impleme
                     () -> request.response().status(GrpcStatus.PERMISSION_DENIED).end());
         });
     }
-
-    private EventMessage handleErrorAndCreateResponse(Throwable error) {
-        if (error instanceof io.vertx.core.eventbus.ReplyException) {
-            io.vertx.core.eventbus.ReplyException replyEx = (io.vertx.core.eventbus.ReplyException) error;
-            return EventMessage.newBuilder()
-                    .setStatus(com.google.rpc.Status.newBuilder().setCode(replyEx.failureCode()).setMessage(replyEx.getMessage()).build())
-                    .build();
-        } else {
-            return EventMessage.newBuilder()
-                    .setStatus(com.google.rpc.Status.newBuilder().setCode(500).setMessage(error.getMessage()).build())
-                    .build();
-        }
-    }
 }

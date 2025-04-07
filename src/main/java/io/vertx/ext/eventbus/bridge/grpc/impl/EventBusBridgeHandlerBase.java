@@ -170,6 +170,27 @@ public abstract class EventBusBridgeHandlerBase {
     }
 
     /**
+     * Handles an error and creates a response message.
+     * <p>
+     * This method is used to handle errors that occur during processing. It creates a response message with the appropriate status code and message.
+     *
+     * @param error the error that occurred
+     * @return a response message with the error details
+     */
+    protected EventMessage handleErrorAndCreateResponse(Throwable error) {
+        if (error instanceof ReplyException) {
+            ReplyException replyEx = (ReplyException) error;
+            return EventMessage.newBuilder()
+                    .setStatus(Status.newBuilder().setCode(replyEx.failureCode()).setMessage(replyEx.getMessage()).build())
+                    .build();
+        } else {
+            return EventMessage.newBuilder()
+                    .setStatus(Status.newBuilder().setCode(500).setMessage(error.getMessage()).build())
+                    .build();
+        }
+    }
+
+    /**
      * Unregisters a consumer from the EventBus.
      *
      * This method is called when a client wants to unsubscribe from an address. It removes the consumer from the internal maps and unregisters it from the EventBus. If this was

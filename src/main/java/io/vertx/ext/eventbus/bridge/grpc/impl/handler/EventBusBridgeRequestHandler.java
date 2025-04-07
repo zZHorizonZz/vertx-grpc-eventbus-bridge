@@ -1,9 +1,11 @@
 package io.vertx.ext.eventbus.bridge.grpc.impl.handler;
 
 import com.google.protobuf.Struct;
+import com.google.rpc.Status;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.BridgeOptions;
@@ -89,18 +91,5 @@ public class EventBusBridgeRequestHandler extends EventBusBridgeHandlerBase impl
                     },
                     () -> request.response().status(GrpcStatus.PERMISSION_DENIED).end());
         });
-    }
-
-    private EventMessage handleErrorAndCreateResponse(Throwable error) {
-        if (error instanceof io.vertx.core.eventbus.ReplyException) {
-            io.vertx.core.eventbus.ReplyException replyEx = (io.vertx.core.eventbus.ReplyException) error;
-            return EventMessage.newBuilder()
-                    .setStatus(com.google.rpc.Status.newBuilder().setCode(replyEx.failureCode()).setMessage(replyEx.getMessage()).build())
-                    .build();
-        } else {
-            return EventMessage.newBuilder()
-                    .setStatus(com.google.rpc.Status.newBuilder().setCode(500).setMessage(error.getMessage()).build())
-                    .build();
-        }
     }
 }
