@@ -132,7 +132,7 @@ public class GrpcEventBusWebTest extends GrpcEventBusBridgeTestBase {
                 });
     }
 
-    /*@Test
+    @Test
     public void testSubscribeToAddress(TestContext context) {
         Async async = context.async();
 
@@ -150,7 +150,7 @@ public class GrpcEventBusWebTest extends GrpcEventBusBridgeTestBase {
                 async.complete();
             });
         }).onFailure(err -> context.fail("Subscription failed: " + err.getMessage()));
-    }*/
+    }
 
     protected MultiMap requestHeaders() {
         return HttpHeaders.headers()
@@ -271,7 +271,7 @@ public class GrpcEventBusWebTest extends GrpcEventBusBridgeTestBase {
         return promise.future();
     }
 
-    /*public Future<Buffer> subscribe(String address) {
+    public Future<Buffer> subscribe(String address) {
         Promise<Buffer> promise = Promise.promise();
 
         client.request(HttpMethod.POST, "/vertx.event.v1alpha.EventBusBridge/Subscribe").compose(httpRequest -> {
@@ -305,7 +305,7 @@ public class GrpcEventBusWebTest extends GrpcEventBusBridgeTestBase {
                 });
 
         return promise.future();
-    }*/
+    }
 
     public Future<Void> ping() {
         Promise<Void> promise = Promise.promise();
