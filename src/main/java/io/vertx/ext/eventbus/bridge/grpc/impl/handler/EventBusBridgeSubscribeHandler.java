@@ -56,8 +56,6 @@ public class EventBusBridgeSubscribeHandler extends EventBusBridgeHandlerBase im
 
             checkCallHook(BridgeEventType.REGISTER, event,
                     () -> {
-                        request.pause();
-
                         String consumerId = UUID.randomUUID().toString();
                         requests.put(consumerId, request);
 
@@ -66,7 +64,7 @@ public class EventBusBridgeSubscribeHandler extends EventBusBridgeHandlerBase im
                         Map<String, MessageConsumer<?>> addressConsumers = consumers.computeIfAbsent(address, k -> new ConcurrentHashMap<>());
                         addressConsumers.put(consumerId, consumer);
 
-                        request.endHandler(v -> unregisterConsumer(address, consumerId));
+                        request.connection().closeHandler(v -> unregisterConsumer(address, consumerId));
                     },
                     () -> replyStatus(request, GrpcStatus.PERMISSION_DENIED));
         });
