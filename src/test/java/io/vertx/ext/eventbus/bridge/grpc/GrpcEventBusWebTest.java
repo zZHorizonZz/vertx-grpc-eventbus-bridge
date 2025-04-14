@@ -2,6 +2,7 @@ package io.vertx.ext.eventbus.bridge.grpc;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.Message;
+import com.google.protobuf.util.Durations;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
@@ -184,7 +185,7 @@ public class GrpcEventBusWebTest extends GrpcEventBusBridgeTestBase {
         EventRequest request = EventRequest.newBuilder()
                 .setAddress(address)
                 .setBody(GrpcEventBusBridgeTestBase.jsonToStruct(message))
-                .setTimeout(timeout)
+                .setTimeout(Durations.fromMillis(timeout))
                 .build();
 
         client.request(HttpMethod.POST, "/vertx.event.v1alpha.EventBusBridge/Request")

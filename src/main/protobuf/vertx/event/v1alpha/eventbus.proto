@@ -4,6 +4,7 @@ package vertx.event.v1alpha;
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
 import "google/rpc/status.proto";
 
 option java_multiple_files = true;
@@ -48,7 +49,7 @@ message EventRequest {
   google.protobuf.Struct body = 5;
 
   // Timeout in milliseconds
-  int64 timeout = 6;
+  google.protobuf.Duration timeout = 6;
 }
 
 // Message received from the event bus

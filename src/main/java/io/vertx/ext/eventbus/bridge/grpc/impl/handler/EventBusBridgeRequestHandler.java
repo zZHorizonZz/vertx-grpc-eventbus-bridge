@@ -1,6 +1,8 @@
 package io.vertx.ext.eventbus.bridge.grpc.impl.handler;
 
+import com.google.protobuf.Duration;
 import com.google.protobuf.Struct;
+import com.google.protobuf.util.Durations;
 import com.google.rpc.Status;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -56,9 +58,10 @@ public class EventBusBridgeRequestHandler extends EventBusBridgeHandlerBase impl
             checkCallHook(BridgeEventType.SEND, eventJson,
                     () -> {
                         DeliveryOptions deliveryOptions = createDeliveryOptions(eventRequest.getHeadersMap());
+                        long timeout = Durations.toMillis(eventRequest.getTimeout());
 
-                        if (eventRequest.getTimeout() > 0) {
-                            deliveryOptions.setSendTimeout(eventRequest.getTimeout());
+                        if (timeout > 0) {
+                            deliveryOptions.setSendTimeout(timeout);
                         }
 
                         bus.request(address, body, deliveryOptions)

@@ -2,6 +2,7 @@ package io.vertx.ext.eventbus.bridge.grpc;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.Struct;
+import com.google.protobuf.util.Durations;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SocketAddress;
@@ -81,7 +82,7 @@ public class GrpcEventBusBridgeTest extends GrpcEventBusBridgeTestBase {
         final EventRequest request = EventRequest.newBuilder()
                 .setAddress("hello")
                 .setBody(jsonToStruct(new JsonObject().put("value", "vert.x")))
-                .setTimeout(5000)
+                .setTimeout(Durations.fromMillis(5000))
                 .build();
 
         grpcClient.request(request).onComplete(context.asyncAssertSuccess(response -> {
